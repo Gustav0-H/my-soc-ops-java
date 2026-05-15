@@ -1,99 +1,86 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8"/>
+    <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Soc Ops — Social Bingo</title>
     <link rel="stylesheet" th:href="@{/css/app.css}"/>
     <link rel="icon" type="image/png" th:href="@{/favicon.png}"/>
-    <style>
-        /* active-state tweaks that need pseudo-class selectors */
-        .tile-active:active { background-color: #f3f4f6 !important; }
-        .accent-active:active { background-color: #3b82f6 !important; }
-    </style>
 </head>
-<body class="h-full">
+<body class="h-full overflow-x-hidden">
+
+<div class="absolute inset-0 pointer-events-none">
+    <div class="hero-sparkle spark-1"></div>
+    <div class="hero-sparkle spark-2"></div>
+    <div class="hero-sparkle spark-3"></div>
+</div>
 
 <!-- ============================================================= -->
 <!--  LOBBY — visible before a game starts                          -->
 <!-- ============================================================= -->
-<div id="lobbyView" class="flex flex-col items-center justify-center min-h-full p-6 bg-gray-50">
-    <div class="text-center max-w-sm">
-        <h1 class="text-4xl font-bold text-gray-900 mb-2">Soc Ops</h1>
-        <p class="text-lg text-gray-600 mb-8">Social Bingo</p>
+<div id="lobbyView" class="relative flex flex-col items-center justify-center min-h-full px-6 py-10">
+    <div class="hero-card text-center max-w-2xl mx-auto">
+        <div class="hero-pill mb-4">Playful Social Bingo</div>
+        <h1 class="text-5xl font-bold text-slate-950 leading-tight mb-4">Soc Ops</h1>
+        <p class="text-lg text-slate-600 mb-8">Turn icebreakers into a party game where every match brings you closer to a bingo.</p>
 
-        <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200 mb-8">
-            <h2 class="font-semibold text-gray-800 mb-3">How to play</h2>
-            <ul class="text-left text-gray-600 text-sm space-y-2">
-                <li>• Find people who match the questions</li>
-                <li>• Tap a square when you find a match</li>
-                <li>• Get 5 in a row to win!</li>
+        <div class="flex flex-wrap justify-center gap-3 mb-8">
+            <span class="pill">Find new people</span>
+            <span class="pill">Tap when matched</span>
+            <span class="pill">Score bingo lines</span>
+        </div>
+
+        <div class="card-panel rounded-[2rem] p-6 shadow-xl border border-slate-200 mb-8 text-left">
+            <h2 class="font-semibold text-slate-900 mb-3">How to play</h2>
+            <ul class="grid gap-3 text-slate-600 text-sm">
+                <li>🎉 Meet people with fun prompts</li>
+                <li>✔️ Tap a square when you find a match</li>
+                <li>🏆 Get 5 in a row to celebrate bingo</li>
             </ul>
         </div>
 
-        <button onclick="launchGame()"
-                class="w-full bg-accent text-white font-semibold py-4 px-8 rounded-lg text-lg accent-active transition-colors">
-            Start Game
-        </button>
+        <button onclick="launchGame()" class="btn-play">Start the party</button>
     </div>
 </div>
 
 <!-- ============================================================= -->
 <!--  ACTIVE GAME — board, header, optional bingo banner            -->
 <!-- ============================================================= -->
-<div id="activeView" class="flex flex-col min-h-full bg-gray-50" style="display:none">
-
-    <!-- top bar -->
-    <header class="flex items-center justify-between p-3 bg-white border-b border-gray-200">
-        <button onclick="retreatToLobby()"
-                class="text-gray-500 text-sm px-3 py-1\.5 rounded tile-active">
-            &#8592; Back
-        </button>
-        <h1 class="font-bold text-gray-900">Soc Ops</h1>
+<div id="activeView" class="relative flex flex-col min-h-full px-4 pb-6" style="display:none">
+    <header class="flex items-center justify-between gap-4 px-4 py-4 bg-white/90 backdrop-blur rounded-b-[2rem] shadow-sm border border-slate-200 sticky top-0 z-20">
+        <button onclick="retreatToLobby()" class="back-button">← Lobby</button>
+        <div class="text-center">
+            <p class="text-xs uppercase tracking-[0.35em] text-amber-500 font-semibold">Social Bingo</p>
+            <h1 class="font-bold text-2xl text-slate-950">Soc Ops</h1>
+        </div>
         <div class="w-16"></div>
     </header>
 
-    <!-- hint -->
-    <p class="text-center text-gray-500 text-sm py-2 px-4">
-        Tap a square when you find someone who matches it.
-    </p>
-
-    <!-- bingo banner (hidden until victory) -->
-    <div id="bingoBanner"
-         class="bg-amber-100 text-amber-800 text-center py-2 font-semibold text-sm"
-         style="display:none">
-        &#127881; BINGO! You got a line!
+    <div class="text-center text-slate-600 px-4 pt-4">
+        Tap a square when someone matches the prompt, then feel the win as your line grows.
     </div>
 
-    <!-- the 5×5 grid -->
+    <div id="bingoBanner" class="banner mb-4" style="display:none">
+        🎊 BINGO! You found a winning row!
+    </div>
+
     <div class="flex-1 flex items-center justify-center p-3">
-        <div id="gridContainer"
-             class="grid grid-cols-5 gap-1 w-full max-w-md mx-auto aspect-square">
-            <!-- tiles injected by JS -->
-        </div>
+        <div id="gridContainer" class="grid grid-cols-5 gap-3 w-full max-w-2xl mx-auto"></div>
     </div>
 </div>
 
 <!-- ============================================================= -->
 <!--  VICTORY MODAL — overlays the board                            -->
 <!-- ============================================================= -->
-<div id="victoryOverlay"
-     class="fixed inset-0 bg-black\/50 flex items-center justify-center p-4 z-50"
-     style="display:none">
-    <div class="bg-white rounded-xl p-6 max-w-xs w-full text-center shadow-xl animate-[bounce_0.5s_ease-out]">
-        <div class="text-5xl mb-4">&#127881;</div>
-        <h2 class="text-3xl font-bold text-amber-500 mb-2">BINGO!</h2>
-        <p class="text-gray-600 mb-6">You completed a line!</p>
-        <button onclick="dismissVictoryModal()"
-                class="w-full bg-accent text-white font-semibold py-3 px-6 rounded-lg accent-active transition-colors">
-            Keep Playing
-        </button>
+<div id="victoryOverlay" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" style="display:none">
+    <div class="victory-card rounded-[2rem] p-6 max-w-xs w-full text-center shadow-2xl animate-[bounce_0.5s_ease-out]">
+        <div class="text-6xl mb-4">🎉</div>
+        <h2 class="text-4xl font-bold text-amber-500 mb-2">BINGO!</h2>
+        <p class="text-slate-600 mb-6">You completed a line and scored the party win.</p>
+        <button onclick="dismissVictoryModal()" class="btn-play">Keep Playing</button>
     </div>
 </div>
 
-<!-- ============================================================= -->
-<!--  Client-side game engine                                       -->
-<!-- ============================================================= -->
 <script>
 (function () {
     "use strict";
@@ -102,20 +89,17 @@
     var TOTAL_CELLS = SIDE * SIDE;
     var PERSIST_KEY = "socops-bingo-snapshot";
 
-    /* ── state ────────────────────────────────────────────────── */
-    var liveTiles   = [];          /* Array of BingoCell objects  */
-    var streakFound = null;        /* WinningStreak or null       */
+    var liveTiles   = [];
+    var streakFound = null;
     var modalShown  = false;
-    var currentPhase = "LOBBY";    /* LOBBY | ACTIVE | VICTORY    */
+    var currentPhase = "LOBBY";
 
-    /* ── DOM refs ─────────────────────────────────────────────── */
     var lobbyDiv   = document.getElementById("lobbyView");
     var activeDiv  = document.getElementById("activeView");
     var gridDiv    = document.getElementById("gridContainer");
     var bannerDiv  = document.getElementById("bingoBanner");
     var overlayDiv = document.getElementById("victoryOverlay");
 
-    /* ── phase switching ──────────────────────────────────────── */
     function showPhase(phase) {
         currentPhase = phase;
         lobbyDiv.style.display   = (phase === "LOBBY") ? "" : "none";
@@ -124,7 +108,6 @@
         overlayDiv.style.display = (modalShown)        ? "" : "none";
     }
 
-    /* ── board rendering ──────────────────────────────────────── */
     function paintGrid() {
         gridDiv.innerHTML = "";
         var winIds = streakFound ? gatherStreakIds(streakFound) : {};
@@ -133,18 +116,14 @@
             var tile = liveTiles[t];
             var btn = document.createElement("button");
 
-            /* base styling identical to the original Blazor BingoSquare */
-            var base = "relative flex items-center justify-center p-1 text-center " +
-                       "border border-gray-300 rounded transition-all duration-150 " +
-                       "select-none min-h-[60px] text-xs leading-tight";
-
+            var base = "relative flex items-center justify-center p-4 text-center border border-gray-200 rounded-[1.25rem] transition-all duration-150 select-none min-h-[70px] text-sm leading-tight shadow-sm";
             var state;
             if (tile.selected) {
                 state = winIds[tile.id]
-                    ? "bg-amber-200 border-amber-400 text-amber-900"
-                    : "bg-marked border-marked-border text-green-800";
+                    ? "bg-gradient-to-br from-amber-100 via-amber-200 to-amber-50 border-amber-300 text-amber-900 shadow-2xl"
+                    : "bg-emerald-100 border-emerald-300 text-emerald-900 shadow-lg";
             } else {
-                state = "bg-white text-gray-700 tile-active";
+                state = "bg-white text-slate-800 hover:shadow-lg tile-active";
             }
 
             var extra = tile.freeCell ? " font-bold text-sm" : "";
@@ -154,21 +133,18 @@
             btn.setAttribute("aria-pressed", String(tile.selected));
             btn.setAttribute("aria-label", tile.freeCell ? "Free space" : tile.prompt);
 
-            /* inner label */
             var labelSpan = document.createElement("span");
             labelSpan.className = "wrap-break-word hyphens-auto";
             labelSpan.textContent = tile.prompt;
             btn.appendChild(labelSpan);
 
-            /* check-mark for marked non-free tiles */
             if (tile.selected && !tile.freeCell) {
                 var tick = document.createElement("span");
                 tick.className = "absolute top-0.5 right-0.5 text-green-600 text-xs";
-                tick.textContent = "\u2713";
+                tick.textContent = "✔";
                 btn.appendChild(tick);
             }
 
-            /* click handler (closure over tile id) */
             btn.addEventListener("click", (function (cid) {
                 return function () { onTileTapped(cid); };
             })(tile.id));
@@ -177,7 +153,6 @@
         }
     }
 
-    /* ── tile tap logic ───────────────────────────────────────── */
     function onTileTapped(cellId) {
         liveTiles = flipTile(liveTiles, cellId);
 
@@ -195,7 +170,6 @@
         overlayDiv.style.display = modalShown  ? "" : "none";
     }
 
-    /* ── board manipulation (mirrors BoardAssembler.java) ─────── */
     function flipTile(board, cellId) {
         return board.map(function (c) {
             if (c.id === cellId && !c.freeCell) {
@@ -205,42 +179,24 @@
         });
     }
 
-    /* ── victory scanning (mirrors detectWinningStreak) ───────── */
     function scanForStreak(board) {
         var r, c, positions, i;
-
-        /* rows */
         for (r = 0; r < SIDE; r++) {
             positions = [];
             for (c = 0; c < SIDE; c++) { positions.push(r * SIDE + c); }
-            if (lineComplete(board, positions)) {
-                return { direction: "row", index: r, cellPositions: positions };
-            }
+            if (lineComplete(board, positions)) { return { direction: "row", index: r, cellPositions: positions }; }
         }
-
-        /* columns */
         for (c = 0; c < SIDE; c++) {
             positions = [];
             for (r = 0; r < SIDE; r++) { positions.push(r * SIDE + c); }
-            if (lineComplete(board, positions)) {
-                return { direction: "column", index: c, cellPositions: positions };
-            }
+            if (lineComplete(board, positions)) { return { direction: "column", index: c, cellPositions: positions }; }
         }
-
-        /* main diagonal */
         positions = [];
         for (i = 0; i < SIDE; i++) { positions.push(i * SIDE + i); }
-        if (lineComplete(board, positions)) {
-            return { direction: "diagonal", index: 0, cellPositions: positions };
-        }
-
-        /* anti diagonal */
+        if (lineComplete(board, positions)) { return { direction: "diagonal", index: 0, cellPositions: positions }; }
         positions = [];
         for (i = 0; i < SIDE; i++) { positions.push(i * SIDE + (SIDE - 1 - i)); }
-        if (lineComplete(board, positions)) {
-            return { direction: "diagonal", index: 1, cellPositions: positions };
-        }
-
+        if (lineComplete(board, positions)) { return { direction: "diagonal", index: 1, cellPositions: positions }; }
         return null;
     }
 
@@ -259,7 +215,6 @@
         return lookup;
     }
 
-    /* ── localStorage persistence ─────────────────────────────── */
     function persistSnapshot() {
         try {
             var blob = JSON.stringify({
@@ -269,7 +224,7 @@
                 modal: modalShown
             });
             localStorage.setItem(PERSIST_KEY, blob);
-        } catch (_) { /* storage full or unavailable */ }
+        } catch (_) { }
     }
 
     function restoreSnapshot() {
@@ -286,7 +241,6 @@
         } catch (_) { return false; }
     }
 
-    /* ── public API (called from onclick attrs) ───────────────── */
     window.launchGame = function () {
         fetch("/api/bingo/fresh-board")
             .then(function (resp) { return resp.json(); })
@@ -316,7 +270,6 @@
         persistSnapshot();
     };
 
-    /* ── boot ─────────────────────────────────────────────────── */
     if (restoreSnapshot()) {
         paintGrid();
         showPhase(currentPhase);
